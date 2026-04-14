@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(source venv/bin/activate)",
+      "Bash(pip install:*)",
+      "Bash(source ../venv/bin/activate)",
+      "Bash(alembic init:*)",
+      "Bash(alembic revision:*)",
+      "Bash(python -c \":*)",
+      "Bash(wc:*)"
+    ]
+  }
+}

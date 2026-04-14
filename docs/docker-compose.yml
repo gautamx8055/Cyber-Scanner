@@ -1,0 +1,11 @@
+services:
+  docs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./mkdocs.yml:/app/mkdocs.yml
+      - .:/app/docs
+    restart: unless-stopped
