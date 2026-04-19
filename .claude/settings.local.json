@@ -7,7 +7,17 @@
       "Bash(alembic init:*)",
       "Bash(alembic revision:*)",
       "Bash(python -c \":*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(DATABASE_URL=\"postgresql+asyncpg://cyberscanner:cyberscanner123@localhost:5432/cyberscanner\" /home/loop/cyber-scanner/venv/bin/alembic current)",
+      "Bash(DATABASE_URL=\"postgresql+asyncpg://cyberscanner:cyberscanner123@localhost:5432/cyberscanner\" /home/loop/cyber-scanner/venv/bin/alembic upgrade *)",
+      "Bash(docker exec cyberscanner_db *)",
+      "Bash(DATABASE_URL=\"postgresql+asyncpg://cyberscanner:cyberscanner123@localhost:5432/cyberscanner\" /home/loop/cyber-scanner/venv/bin/python *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:9000/)",
+      "Bash(curl -s http://localhost:9000/)",
+      "Bash(docker restart *)",
+      "Bash(docker compose *)",
+      "Bash(curl -s -o /dev/null -w \"root: %{http_code}\\\\n\" http://localhost:9000/)",
+      "Bash(curl -s -o /dev/null -w \"tasks/task-2.1: %{http_code}\\\\n\" http://localhost:9000/tasks/task-2.1-tcp-scanner/)"
     ]
   }
 }

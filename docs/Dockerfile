@@ -7,6 +7,6 @@ RUN pip install --no-cache-dir mkdocs-material
 COPY mkdocs.yml .
 COPY . ./docs/
 
-EXPOSE 8000
+EXPOSE 9000
 
-CMD ["mkdocs", "serve", "--dev-addr=0.0.0.0:8000"]
+CMD ["mkdocs", "serve", "--dev-addr=0.0.0.0:9000"]

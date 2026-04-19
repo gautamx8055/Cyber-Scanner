@@ -40,6 +40,7 @@ class Scan(Base):
     started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     options: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    results: Mapped[list | None] = mapped_column(JSON, nullable=True)
 
     def __repr__(self) -> str:
         return f"<Scan id={self.id} target={self.target_ip} status={self.status}>"
