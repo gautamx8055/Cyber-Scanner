@@ -22,23 +22,23 @@ Mark tasks as done by changing `[ ]` to `[x]`.
 ---
 
 ## Phase 2 — Core Port Scanner (Synchronous)
-- [ ] 2.1 Write `backend/scanner/port_scanner.py` — `scan_port(ip, port)` using Python `socket`
-- [ ] 2.1 Handle open / closed / filtered port states
-- [ ] 2.1 Print results to terminal with Rich table
-- [ ] 2.2 Banner grabbing — read first bytes from open port
-- [ ] 2.2 Service map — common ports to service names (22=SSH, 80=HTTP, etc.)
-- [ ] 2.2 Parse banner for software/version info
-- [ ] 2.2 Save scan results to PostgreSQL via SQLAlchemy
-- [ ] 2.3 Time the synchronous scanner — record baseline speed
-- [ ] 2.3 Add `argparse` CLI — `cyberscan ports <ip> -p 1-1000 --timeout 1`
-- [ ] 2.3 Support port formats: single (`80`), range (`1-1000`), list (`80,443,8080`)
+- [x] 2.1 Write `backend/scanner/port_scanner.py` — `scan_port(ip, port)` using Python `socket`
+- [x] 2.1 Handle open / closed / filtered port states
+- [x] 2.1 Print results to terminal with Rich table
+- [x] 2.2 Banner grabbing — read first bytes from open port
+- [x] 2.2 Service map — common ports to service names (22=SSH, 80=HTTP, etc.)
+- [x] 2.2 Parse banner for software/version info
+- [x] 2.2 Save scan results to PostgreSQL via SQLAlchemy
+- [x] 2.3 Time the synchronous scanner — record baseline speed
+- [x] 2.3 Add `argparse` CLI — `cyberscan ports <ip> -p 1-1000 --timeout 1`
+- [x] 2.3 Support port formats: single (`80`), range (`1-1000`), list (`80,443,8080`)
 
 ---
 
 ## Phase 3 — Async Port Scanner (Fast Version)
-- [ ] 3.1 Rewrite `scan_port()` as `async def` using `asyncio.open_connection()`
-- [ ] 3.1 Use `asyncio.gather()` to scan all ports simultaneously
-- [ ] 3.1 Benchmark: compare sync vs async on same target
+- [x] 3.1 Rewrite `scan_port()` as `async def` using `asyncio.open_connection()`
+- [x] 3.1 Use `asyncio.gather()` to scan all ports simultaneously
+- [x] 3.1 Benchmark: compare sync vs async on same target
 - [ ] 3.2 Add `asyncio.Semaphore` — limit max concurrent connections
 - [ ] 3.2 Add per-connection timeout with `asyncio.wait_for()`
 - [ ] 3.2 Write basic UDP scanner using `sendto`/`recvfrom`
