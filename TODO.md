@@ -44,8 +44,8 @@ Mark tasks as done by changing `[ ]` to `[x]`.
 - [x] 3.2 Write basic UDP scanner using `sendto`/`recvfrom`
 - [x] 3.3 ICMP ping sweep using scapy — scan subnet for live hosts
 - [x] 3.3 Add `--sweep` flag to CLI: `cyberscan sweep 192.168.1.0/24`
-- [ ] 3.4 DNS resolution — hostname → IP and reverse (IP → hostname)
-- [ ] 3.4 OS fingerprinting hints from TTL values (Linux=64, Windows=128)
+- [x] 3.4 DNS resolution — hostname → IP and reverse (IP → hostname)
+- [x] 3.4 OS fingerprinting hints from TTL values (Linux=64, Windows=128)
 
 ---
 

@@ -454,6 +454,7 @@ async def save_scan_results(
     started_at: datetime,
     completed_at: datetime,
     results: list[PortResult],
+    target_hostname: str | None = None,
 ) -> str:
     """Persist a completed port scan to PostgreSQL. Returns the scan id."""
     # Imported lazily so the scanner module itself has no DB dependency —
@@ -464,6 +465,7 @@ async def save_scan_results(
     async with AsyncSessionLocal() as session:
         scan = Scan(
             target_ip=target_ip,
+            target_hostname=target_hostname,
             scan_type=ScanType.port,
             status=ScanStatus.completed,
             started_at=started_at,

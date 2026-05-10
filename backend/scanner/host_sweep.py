@@ -1,8 +1,10 @@
 """
-ICMP ping sweep — Phase 3.3.
+ICMP ping sweep — Phase 3.3, extended in Phase 3.4 with reverse DNS and
+TTL-based OS hints.
 
 Public surface:
-    ping_sweep(cidr, timeout)               -> list[HostResult]
+    ping_sweep(cidr, timeout, *, resolve=True) -> list[HostResult]
+    os_hint_from_ttl(ttl)                       -> str | None
     render_sweep_table(cidr, results, elapsed, *, show_down=False)
 
 Built on scapy. Sending and receiving ICMP needs raw sockets, so the
@@ -19,17 +21,51 @@ from typing import Optional
 from rich.console import Console
 from rich.table import Table
 
+from .dns_utils import resolve_reverse_many
+
 
 @dataclass
 class HostResult:
     ip: str
     alive: bool
     rtt_ms: Optional[float] = None
-    hostname: Optional[str] = None  # populated in Task 3.4
+    hostname: Optional[str] = None
+    ttl: Optional[int] = None
+    os_hint: Optional[str] = None
 
 
-def ping_sweep(cidr: str, timeout: float = 2.0) -> list[HostResult]:
+# Common initial TTL values per OS family. Each hop on the path decrements
+# the TTL by 1, so the value we *receive* is (initial_ttl - hops). To pick
+# the most likely initial value we take the smallest of these >= received.
+# This is a coarse heuristic; real OS fingerprinting (nmap -O) inspects far
+# more signals than just TTL.
+_TTL_BUCKETS: list[tuple[int, str]] = [
+    (64,  "Linux/Unix"),
+    (128, "Windows"),
+    (255, "Network device"),
+]
+
+
+def os_hint_from_ttl(ttl: int) -> Optional[str]:
+    """Map a received ICMP TTL to a coarse OS family guess."""
+    if ttl is None or ttl <= 0:
+        return None
+    for ceiling, label in _TTL_BUCKETS:
+        if ttl <= ceiling:
+            return label
+    return None
+
+
+def ping_sweep(
+    cidr: str,
+    timeout: float = 2.0,
+    *,
+    resolve: bool = True,
+) -> list[HostResult]:
     """ICMP-echo every host in `cidr` and report which ones reply.
+
+    For every responding host we also capture the reply TTL (used for the
+    OS hint) and, if `resolve` is True, the reverse-DNS hostname.
 
     Returns one HostResult per host in the network, in iteration order.
     Hosts that don't reply within `timeout` come back as alive=False —
@@ -68,16 +104,30 @@ def ping_sweep(cidr: str, timeout: float = 2.0) -> list[HostResult]:
             ) from e
         raise
 
-    alive: set[str] = set()
     rtt_by_ip: dict[str, float] = {}
+    ttl_by_ip: dict[str, int] = {}
     for sent, received in ans:
-        alive.add(received.src)
-        # sent_time and time are Unix timestamps in seconds; subtract for RTT.
+        ip = received.src
         if sent.sent_time and received.time:
-            rtt_by_ip[received.src] = (received.time - sent.sent_time) * 1000.0
+            rtt_by_ip[ip] = (received.time - sent.sent_time) * 1000.0
+        if received.ttl is not None:
+            ttl_by_ip[ip] = int(received.ttl)
+
+    # Reverse-DNS only the responders — it'd be wasteful (and slow) to PTR
+    # every dead host in a /24. The thread pool keeps the wall clock low.
+    hostnames: dict[str, str | None] = {}
+    if resolve and ttl_by_ip:
+        hostnames = resolve_reverse_many(list(ttl_by_ip.keys()))
 
     return [
-        HostResult(ip=h, alive=h in alive, rtt_ms=rtt_by_ip.get(h))
+        HostResult(
+            ip=h,
+            alive=h in ttl_by_ip,
+            rtt_ms=rtt_by_ip.get(h),
+            ttl=ttl_by_ip.get(h),
+            os_hint=os_hint_from_ttl(ttl_by_ip[h]) if h in ttl_by_ip else None,
+            hostname=hostnames.get(h),
+        )
         for h in hosts
     ]
 
@@ -94,18 +144,30 @@ def render_sweep_table(cidr: str, results: list[HostResult], elapsed: float,
     )
     table = Table(title=title)
     table.add_column("IP", style="cyan")
+    table.add_column("Hostname")
     table.add_column("Status", style="bold")
     table.add_column("RTT", justify="right")
+    table.add_column("TTL", justify="right")
+    table.add_column("OS hint")
 
     rows = results if show_down else alive_hosts
     for r in rows:
         if r.alive:
             status = "[green]alive[/green]"
             rtt = f"{r.rtt_ms:.1f} ms" if r.rtt_ms is not None else "-"
+            ttl = str(r.ttl) if r.ttl is not None else "-"
         else:
             status = "[red]down[/red]"
             rtt = "-"
-        table.add_row(r.ip, status, rtt)
+            ttl = "-"
+        table.add_row(
+            r.ip,
+            r.hostname or "-",
+            status,
+            rtt,
+            ttl,
+            r.os_hint or "-",
+        )
     console.print(table)
     console.print(
         f"[dim]Summary: {len(alive_hosts)} alive, "

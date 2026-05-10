@@ -17,6 +17,7 @@ import sys
 import time
 from datetime import datetime, timezone
 
+from scanner.dns_utils import is_ip_literal, resolve_forward
 from scanner.host_sweep import ping_sweep, render_sweep_table
 from scanner.port_scanner import (
     DEFAULT_TCP_CONCURRENCY,
@@ -67,14 +68,30 @@ def cmd_ports(args: argparse.Namespace) -> int:
         print(f"error: {e}", file=sys.stderr)
         return 2
 
+    # Resolve hostname targets up-front so every per-port connect doesn't
+    # repeat the DNS round trip — and so we can show "host (ip)" in the
+    # output and persist both halves to the DB.
+    target_hostname: str | None = None
+    if is_ip_literal(args.target):
+        target_ip = args.target
+        target_label = args.target
+    else:
+        resolved = resolve_forward(args.target)
+        if resolved is None:
+            print(f"error: could not resolve {args.target!r}", file=sys.stderr)
+            return 2
+        target_hostname = args.target
+        target_ip = resolved
+        target_label = f"{args.target} ({resolved})"
+
     if args.benchmark:
-        return _run_benchmark(args, ports)
+        return _run_benchmark(args, ports, target_ip, target_label)
 
     proto = "udp" if args.udp else "tcp"
     mode = "async" if args.use_async else "sync"
     concurrency_note = f", concurrency={args.concurrency}" if args.use_async else ""
     print(
-        f"Scanning {args.target} — {len(ports)} {proto} port(s), "
+        f"Scanning {target_label} — {len(ports)} {proto} port(s), "
         f"timeout={args.timeout}s ({mode}{concurrency_note})"
     )
     started = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -82,24 +99,24 @@ def cmd_ports(args: argparse.Namespace) -> int:
     if args.udp:
         if args.use_async:
             results = asyncio.run(scan_udp_ports_async(
-                args.target, ports,
+                target_ip, ports,
                 timeout=args.timeout, concurrency=args.concurrency,
             ))
         else:
-            results = scan_udp_ports(args.target, ports, timeout=args.timeout)
+            results = scan_udp_ports(target_ip, ports, timeout=args.timeout)
     else:
         if args.use_async:
             results = asyncio.run(scan_ports_async(
-                args.target, ports,
+                target_ip, ports,
                 timeout=args.timeout, concurrency=args.concurrency,
             ))
         else:
-            results = scan_ports(args.target, ports, timeout=args.timeout)
+            results = scan_ports(target_ip, ports, timeout=args.timeout)
     elapsed = time.perf_counter() - t0
     completed = datetime.now(timezone.utc).replace(tzinfo=None)
 
     render_results_table(
-        args.target, results, elapsed, show_closed=args.show_closed
+        target_label, results, elapsed, show_closed=args.show_closed
     )
 
     if args.no_save:
@@ -107,7 +124,8 @@ def cmd_ports(args: argparse.Namespace) -> int:
 
     try:
         scan_id = asyncio.run(save_scan_results(
-            target_ip=args.target,
+            target_ip=target_ip,
+            target_hostname=target_hostname,
             port_spec=args.ports,
             timeout=args.timeout,
             started_at=started,
@@ -121,7 +139,12 @@ def cmd_ports(args: argparse.Namespace) -> int:
     return 0
 
 
-def _run_benchmark(args: argparse.Namespace, ports: list[int]) -> int:
+def _run_benchmark(
+    args: argparse.Namespace,
+    ports: list[int],
+    target_ip: str,
+    target_label: str,
+) -> int:
     """Run sync then async against the same target and print the speedup.
 
     TCP only — UDP doesn't benefit from concurrency the same way (most ports
@@ -131,19 +154,19 @@ def _run_benchmark(args: argparse.Namespace, ports: list[int]) -> int:
         print("error: --benchmark is TCP-only", file=sys.stderr)
         return 2
     print(
-        f"Benchmark — {args.target}, {len(ports)} port(s), "
+        f"Benchmark — {target_label}, {len(ports)} port(s), "
         f"timeout={args.timeout}s, concurrency={args.concurrency}"
     )
 
     t0 = time.perf_counter()
-    sync_results = scan_ports(args.target, ports, timeout=args.timeout)
+    sync_results = scan_ports(target_ip, ports, timeout=args.timeout)
     sync_elapsed = time.perf_counter() - t0
     sync_open = sum(1 for r in sync_results if r.state == "open")
     print(f"  sync : {sync_elapsed:7.2f}s  ({sync_open} open)")
 
     t0 = time.perf_counter()
     async_results = asyncio.run(scan_ports_async(
-        args.target, ports,
+        target_ip, ports,
         timeout=args.timeout, concurrency=args.concurrency,
     ))
     async_elapsed = time.perf_counter() - t0
@@ -156,10 +179,13 @@ def _run_benchmark(args: argparse.Namespace, ports: list[int]) -> int:
 
 
 def cmd_sweep(args: argparse.Namespace) -> int:
-    print(f"Sweeping {args.cidr} (timeout={args.timeout}s) …")
+    resolve_note = "" if args.resolve else ", no reverse-DNS"
+    print(f"Sweeping {args.cidr} (timeout={args.timeout}s{resolve_note}) …")
     t0 = time.perf_counter()
     try:
-        results = ping_sweep(args.cidr, timeout=args.timeout)
+        results = ping_sweep(
+            args.cidr, timeout=args.timeout, resolve=args.resolve,
+        )
     except ValueError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -235,7 +261,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--show-down", action="store_true",
         help="show non-responding hosts in the output table",
     )
-    sweep.set_defaults(func=cmd_sweep)
+    sweep.add_argument(
+        "--no-resolve", dest="resolve", action="store_false",
+        help="skip reverse-DNS lookup for alive hosts (faster)",
+    )
+    sweep.set_defaults(func=cmd_sweep, resolve=True)
     return p
 
 
