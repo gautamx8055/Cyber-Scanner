@@ -5,7 +5,7 @@ Run from the `backend/` directory:
     python -m cli ports 127.0.0.1 -p 1-1000 --timeout 1
 
 Subcommands:
-    ports   TCP connect port scan
+    ports   TCP/UDP port scan (sync or async)
 """
 from __future__ import annotations
 
@@ -16,10 +16,14 @@ import time
 from datetime import datetime, timezone
 
 from scanner.port_scanner import (
+    DEFAULT_TCP_CONCURRENCY,
+    DEFAULT_UDP_CONCURRENCY,
     render_results_table,
     save_scan_results,
     scan_ports,
     scan_ports_async,
+    scan_udp_ports,
+    scan_udp_ports_async,
 )
 
 
@@ -63,19 +67,31 @@ def cmd_ports(args: argparse.Namespace) -> int:
     if args.benchmark:
         return _run_benchmark(args, ports)
 
+    proto = "udp" if args.udp else "tcp"
     mode = "async" if args.use_async else "sync"
+    concurrency_note = f", concurrency={args.concurrency}" if args.use_async else ""
     print(
-        f"Scanning {args.target} — {len(ports)} port(s), "
-        f"timeout={args.timeout}s ({mode})"
+        f"Scanning {args.target} — {len(ports)} {proto} port(s), "
+        f"timeout={args.timeout}s ({mode}{concurrency_note})"
     )
     started = datetime.now(timezone.utc).replace(tzinfo=None)
     t0 = time.perf_counter()
-    if args.use_async:
-        results = asyncio.run(
-            scan_ports_async(args.target, ports, timeout=args.timeout)
-        )
+    if args.udp:
+        if args.use_async:
+            results = asyncio.run(scan_udp_ports_async(
+                args.target, ports,
+                timeout=args.timeout, concurrency=args.concurrency,
+            ))
+        else:
+            results = scan_udp_ports(args.target, ports, timeout=args.timeout)
     else:
-        results = scan_ports(args.target, ports, timeout=args.timeout)
+        if args.use_async:
+            results = asyncio.run(scan_ports_async(
+                args.target, ports,
+                timeout=args.timeout, concurrency=args.concurrency,
+            ))
+        else:
+            results = scan_ports(args.target, ports, timeout=args.timeout)
     elapsed = time.perf_counter() - t0
     completed = datetime.now(timezone.utc).replace(tzinfo=None)
 
@@ -103,10 +119,17 @@ def cmd_ports(args: argparse.Namespace) -> int:
 
 
 def _run_benchmark(args: argparse.Namespace, ports: list[int]) -> int:
-    """Run sync then async against the same target and print the speedup."""
+    """Run sync then async against the same target and print the speedup.
+
+    TCP only — UDP doesn't benefit from concurrency the same way (most ports
+    answer with silence, so the scan is timeout-bound either way).
+    """
+    if args.udp:
+        print("error: --benchmark is TCP-only", file=sys.stderr)
+        return 2
     print(
         f"Benchmark — {args.target}, {len(ports)} port(s), "
-        f"timeout={args.timeout}s"
+        f"timeout={args.timeout}s, concurrency={args.concurrency}"
     )
 
     t0 = time.perf_counter()
@@ -116,9 +139,10 @@ def _run_benchmark(args: argparse.Namespace, ports: list[int]) -> int:
     print(f"  sync : {sync_elapsed:7.2f}s  ({sync_open} open)")
 
     t0 = time.perf_counter()
-    async_results = asyncio.run(
-        scan_ports_async(args.target, ports, timeout=args.timeout)
-    )
+    async_results = asyncio.run(scan_ports_async(
+        args.target, ports,
+        timeout=args.timeout, concurrency=args.concurrency,
+    ))
     async_elapsed = time.perf_counter() - t0
     async_open = sum(1 for r in async_results if r.state == "open")
     print(f"  async: {async_elapsed:7.2f}s  ({async_open} open)")
@@ -135,7 +159,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sub = p.add_subparsers(dest="command", required=True)
 
-    ports = sub.add_parser("ports", help="TCP port scan (synchronous)")
+    ports = sub.add_parser("ports", help="TCP/UDP port scan (sync or async)")
     ports.add_argument("target", help="target IP or hostname")
     ports.add_argument(
         "-p", "--ports",
@@ -157,6 +181,18 @@ def build_parser() -> argparse.ArgumentParser:
     ports.add_argument(
         "--async", dest="use_async", action="store_true",
         help="use the async scanner (concurrent via asyncio.gather)",
+    )
+    ports.add_argument(
+        "--udp", action="store_true",
+        help="UDP scan instead of TCP (recommend bumping --timeout to 2+)",
+    )
+    ports.add_argument(
+        "-c", "--concurrency", type=int, default=DEFAULT_TCP_CONCURRENCY,
+        help=(
+            "max concurrent probes for the async scanner "
+            f"(default: {DEFAULT_TCP_CONCURRENCY} TCP / "
+            f"{DEFAULT_UDP_CONCURRENCY} suggested for UDP)"
+        ),
     )
     ports.add_argument(
         "--benchmark", action="store_true",

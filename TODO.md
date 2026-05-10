@@ -39,9 +39,9 @@ Mark tasks as done by changing `[ ]` to `[x]`.
 - [x] 3.1 Rewrite `scan_port()` as `async def` using `asyncio.open_connection()`
 - [x] 3.1 Use `asyncio.gather()` to scan all ports simultaneously
 - [x] 3.1 Benchmark: compare sync vs async on same target
-- [ ] 3.2 Add `asyncio.Semaphore` — limit max concurrent connections
-- [ ] 3.2 Add per-connection timeout with `asyncio.wait_for()`
-- [ ] 3.2 Write basic UDP scanner using `sendto`/`recvfrom`
+- [x] 3.2 Add `asyncio.Semaphore` — limit max concurrent connections
+- [x] 3.2 Add per-connection timeout with `asyncio.wait_for()`
+- [x] 3.2 Write basic UDP scanner using `sendto`/`recvfrom`
 - [ ] 3.3 ICMP ping sweep using scapy — scan subnet for live hosts
 - [ ] 3.3 Add `--sweep` flag to CLI: `cyberscan sweep 192.168.1.0/24`
 - [ ] 3.4 DNS resolution — hostname → IP and reverse (IP → hostname)
