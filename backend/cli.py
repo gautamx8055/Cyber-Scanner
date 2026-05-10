@@ -3,9 +3,11 @@ CyberScanner CLI.
 
 Run from the `backend/` directory:
     python -m cli ports 127.0.0.1 -p 1-1000 --timeout 1
+    sudo -E ./venv/bin/python -m cli sweep 192.168.1.0/24
 
 Subcommands:
     ports   TCP/UDP port scan (sync or async)
+    sweep   ICMP ping sweep across a CIDR (needs root for raw sockets)
 """
 from __future__ import annotations
 
@@ -15,6 +17,7 @@ import sys
 import time
 from datetime import datetime, timezone
 
+from scanner.host_sweep import ping_sweep, render_sweep_table
 from scanner.port_scanner import (
     DEFAULT_TCP_CONCURRENCY,
     DEFAULT_UDP_CONCURRENCY,
@@ -152,6 +155,22 @@ def _run_benchmark(args: argparse.Namespace, ports: list[int]) -> int:
     return 0
 
 
+def cmd_sweep(args: argparse.Namespace) -> int:
+    print(f"Sweeping {args.cidr} (timeout={args.timeout}s) …")
+    t0 = time.perf_counter()
+    try:
+        results = ping_sweep(args.cidr, timeout=args.timeout)
+    except ValueError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+    except PermissionError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    elapsed = time.perf_counter() - t0
+    render_sweep_table(args.cidr, results, elapsed, show_down=args.show_down)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="cyberscan",
@@ -199,6 +218,24 @@ def build_parser() -> argparse.ArgumentParser:
         help="run sync then async on the same target and print the speedup",
     )
     ports.set_defaults(func=cmd_ports)
+
+    sweep = sub.add_parser(
+        "sweep",
+        help="ICMP ping sweep across a CIDR (needs root for raw sockets)",
+    )
+    sweep.add_argument(
+        "cidr",
+        help="target subnet, e.g. 192.168.1.0/24 or 10.0.0.5/32",
+    )
+    sweep.add_argument(
+        "--timeout", type=float, default=2.0,
+        help="seconds to wait for ICMP replies (default: 2.0)",
+    )
+    sweep.add_argument(
+        "--show-down", action="store_true",
+        help="show non-responding hosts in the output table",
+    )
+    sweep.set_defaults(func=cmd_sweep)
     return p
 
 
