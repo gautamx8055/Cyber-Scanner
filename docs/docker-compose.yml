@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "9000:9000"
     volumes:
       - ./mkdocs.yml:/app/mkdocs.yml
       - .:/app/docs

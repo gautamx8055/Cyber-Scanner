@@ -29,7 +29,3 @@ theme:
 
 plugins:
   - search
-
-nav:
-  - Home: PROJECT_PLAN.md
-  - Workflow: workflow/WORKFLOW.md

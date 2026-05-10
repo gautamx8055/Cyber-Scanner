@@ -22,30 +22,30 @@ Mark tasks as done by changing `[ ]` to `[x]`.
 ---
 
 ## Phase 2 — Core Port Scanner (Synchronous)
-- [ ] 2.1 Write `backend/scanner/port_scanner.py` — `scan_port(ip, port)` using Python `socket`
-- [ ] 2.1 Handle open / closed / filtered port states
-- [ ] 2.1 Print results to terminal with Rich table
-- [ ] 2.2 Banner grabbing — read first bytes from open port
-- [ ] 2.2 Service map — common ports to service names (22=SSH, 80=HTTP, etc.)
-- [ ] 2.2 Parse banner for software/version info
-- [ ] 2.2 Save scan results to PostgreSQL via SQLAlchemy
-- [ ] 2.3 Time the synchronous scanner — record baseline speed
-- [ ] 2.3 Add `argparse` CLI — `cyberscan ports <ip> -p 1-1000 --timeout 1`
-- [ ] 2.3 Support port formats: single (`80`), range (`1-1000`), list (`80,443,8080`)
+- [x] 2.1 Write `backend/scanner/port_scanner.py` — `scan_port(ip, port)` using Python `socket`
+- [x] 2.1 Handle open / closed / filtered port states
+- [x] 2.1 Print results to terminal with Rich table
+- [x] 2.2 Banner grabbing — read first bytes from open port
+- [x] 2.2 Service map — common ports to service names (22=SSH, 80=HTTP, etc.)
+- [x] 2.2 Parse banner for software/version info
+- [x] 2.2 Save scan results to PostgreSQL via SQLAlchemy
+- [x] 2.3 Time the synchronous scanner — record baseline speed
+- [x] 2.3 Add `argparse` CLI — `cyberscan ports <ip> -p 1-1000 --timeout 1`
+- [x] 2.3 Support port formats: single (`80`), range (`1-1000`), list (`80,443,8080`)
 
 ---
 
 ## Phase 3 — Async Port Scanner (Fast Version)
-- [ ] 3.1 Rewrite `scan_port()` as `async def` using `asyncio.open_connection()`
-- [ ] 3.1 Use `asyncio.gather()` to scan all ports simultaneously
-- [ ] 3.1 Benchmark: compare sync vs async on same target
-- [ ] 3.2 Add `asyncio.Semaphore` — limit max concurrent connections
-- [ ] 3.2 Add per-connection timeout with `asyncio.wait_for()`
-- [ ] 3.2 Write basic UDP scanner using `sendto`/`recvfrom`
-- [ ] 3.3 ICMP ping sweep using scapy — scan subnet for live hosts
-- [ ] 3.3 Add `--sweep` flag to CLI: `cyberscan sweep 192.168.1.0/24`
-- [ ] 3.4 DNS resolution — hostname → IP and reverse (IP → hostname)
-- [ ] 3.4 OS fingerprinting hints from TTL values (Linux=64, Windows=128)
+- [x] 3.1 Rewrite `scan_port()` as `async def` using `asyncio.open_connection()`
+- [x] 3.1 Use `asyncio.gather()` to scan all ports simultaneously
+- [x] 3.1 Benchmark: compare sync vs async on same target
+- [x] 3.2 Add `asyncio.Semaphore` — limit max concurrent connections
+- [x] 3.2 Add per-connection timeout with `asyncio.wait_for()`
+- [x] 3.2 Write basic UDP scanner using `sendto`/`recvfrom`
+- [x] 3.3 ICMP ping sweep using scapy — scan subnet for live hosts
+- [x] 3.3 Add `--sweep` flag to CLI: `cyberscan sweep 192.168.1.0/24`
+- [x] 3.4 DNS resolution — hostname → IP and reverse (IP → hostname)
+- [x] 3.4 OS fingerprinting hints from TTL values (Linux=64, Windows=128)
 
 ---
 
