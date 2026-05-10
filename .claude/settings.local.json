@@ -17,7 +17,24 @@
       "Bash(docker restart *)",
       "Bash(docker compose *)",
       "Bash(curl -s -o /dev/null -w \"root: %{http_code}\\\\n\" http://localhost:9000/)",
-      "Bash(curl -s -o /dev/null -w \"tasks/task-2.1: %{http_code}\\\\n\" http://localhost:9000/tasks/task-2.1-tcp-scanner/)"
+      "Bash(curl -s -o /dev/null -w \"tasks/task-2.1: %{http_code}\\\\n\" http://localhost:9000/tasks/task-2.1-tcp-scanner/)",
+      "Bash(docker-compose ps *)",
+      "Bash(xargs python3 -m py_compile)",
+      "Bash(python3 -m py_compile backend/scanner/port_scanner.py backend/cli.py)",
+      "Bash(PYTHONDONTWRITEBYTECODE=1 python3 *)",
+      "Read(//usr/bin/**)",
+      "Bash(venv/bin/python -c \"import scapy; print\\('scapy', scapy.__version__, 'available in venv'\\)\")",
+      "Bash(PYTHONDONTWRITEBYTECODE=1 ../venv/bin/python -c ' *)",
+      "Bash(PYTHONDONTWRITEBYTECODE=1 ../venv/bin/python *)",
+      "Bash(mkdir -p /tmp/cs-snapshot)",
+      "Bash(cp /home/loop/cyber-scanner/backend/cli.py /tmp/cs-snapshot/cli.final.py)",
+      "Bash(cp /home/loop/cyber-scanner/backend/scanner/port_scanner.py /tmp/cs-snapshot/port_scanner.final.py)",
+      "Bash(cp /home/loop/cyber-scanner/backend/scanner/host_sweep.py /tmp/cs-snapshot/host_sweep.final.py)",
+      "Bash(cp /home/loop/cyber-scanner/backend/scanner/dns_utils.py /tmp/cs-snapshot/dns_utils.final.py)",
+      "Bash(git -C /home/loop/cyber-scanner restore backend/cli.py backend/scanner/port_scanner.py TODO.md)",
+      "Bash(git -C /home/loop/cyber-scanner status)",
+      "Bash(git -C /home/loop/cyber-scanner add backend/cli.py backend/scanner/port_scanner.py TODO.md docs/tasks/task-3.2-semaphore-and-udp.md)",
+      "Bash(git *)"
     ]
   }
 }
