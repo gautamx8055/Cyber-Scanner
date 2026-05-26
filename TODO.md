@@ -50,15 +50,15 @@ Mark tasks as done by changing `[ ]` to `[x]`.
 ---
 
 ## Phase 4 — Vulnerability Detection Engine
-- [ ] 4.1 Write regex patterns to extract versions from banners
-- [ ] 4.1 Build local CVE database JSON file (~50 known CVEs)
-- [ ] 4.1 Write `backend/scanner/vuln_scanner.py` — match versions against local CVE DB
-- [ ] 4.2 Connect to NIST NVD API — query live CVE data
-- [ ] 4.2 Implement CVSS risk scoring: Critical / High / Medium / Low
-- [ ] 4.2 Display colored risk levels with Rich
-- [ ] 4.3 Add `vulnerabilities` table to DB schema
-- [ ] 4.3 Run Alembic migration for vulnerabilities table
-- [ ] 4.3 Save CVEs with scores to DB, linked to parent scan
+- [x] 4.1 Write regex patterns to extract versions from banners
+- [x] 4.1 Build local CVE database JSON file (~50 known CVEs)
+- [x] 4.1 Write `backend/scanner/vuln_scanner.py` — match versions against local CVE DB
+- [x] 4.2 Connect to NIST NVD API — query live CVE data
+- [x] 4.2 Implement CVSS risk scoring: Critical / High / Medium / Low
+- [x] 4.2 Display colored risk levels with Rich
+- [x] 4.3 Add `vulnerabilities` table to DB schema
+- [x] 4.3 Run Alembic migration for vulnerabilities table
+- [x] 4.3 Save CVEs with scores to DB, linked to parent scan
 
 ---
 
