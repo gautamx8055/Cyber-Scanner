@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 from logging.config import fileConfig
@@ -21,13 +22,11 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# Override sqlalchemy.url from environment if set
+# Run migrations through the same asyncpg driver the app uses, so no separate
+# sync driver (psycopg2) needs to be installed.
 db_url = os.getenv("DATABASE_URL", "")
 if db_url:
-    # Alembic needs a sync driver for migrations — swap asyncpg → psycopg2 style
-    # We use the standard psycopg2 URL for alembic's sync engine
-    sync_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
-    config.set_main_option("sqlalchemy.url", sync_url)
+    config.set_main_option("sqlalchemy.url", db_url)
 
 
 def run_migrations_offline() -> None:
@@ -48,19 +47,24 @@ def do_run_migrations(connection: Connection) -> None:
         context.run_migrations()
 
 
+async def run_async_migrations() -> None:
+    connectable = async_engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+    async with connectable.connect() as connection:
+        await connection.run_sync(do_run_migrations)
+    await connectable.dispose()
+
+
 def run_migrations_online() -> None:
     connectable = context.config.attributes.get("connection", None)
-
-    if connectable is None:
-        from sqlalchemy import create_engine
-        url = config.get_main_option("sqlalchemy.url")
-        connectable = create_engine(url, poolclass=pool.NullPool)
-
-        with connectable.connect() as connection:
-            do_run_migrations(connection)
-        connectable.dispose()
-    else:
+    if connectable is not None:
+        # Reuse a caller-provided (sync) connection, e.g. from tests.
         do_run_migrations(connectable)
+    else:
+        asyncio.run(run_async_migrations())
 
 
 if context.is_offline_mode():
