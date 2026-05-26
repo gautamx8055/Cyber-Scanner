@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import os
 import sys
 import time
 from datetime import datetime, timezone
@@ -28,6 +29,12 @@ from scanner.port_scanner import (
     scan_ports_async,
     scan_udp_ports,
     scan_udp_ports_async,
+)
+from scanner.vuln_scanner import (
+    render_vuln_table,
+    save_vuln_scan,
+    scan_local,
+    scan_nvd,
 )
 
 
@@ -197,6 +204,75 @@ def cmd_sweep(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_vuln(args: argparse.Namespace) -> int:
+    try:
+        ports = parse_ports(args.ports)
+    except ValueError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+
+    target_hostname: str | None = None
+    if is_ip_literal(args.target):
+        target_ip = args.target
+        target_label = args.target
+    else:
+        resolved = resolve_forward(args.target)
+        if resolved is None:
+            print(f"error: could not resolve {args.target!r}", file=sys.stderr)
+            return 2
+        target_hostname = args.target
+        target_ip = resolved
+        target_label = f"{args.target} ({resolved})"
+
+    # Step 1 — port scan to grab banners → (product, version) per open port.
+    print(
+        f"Scanning {target_label} — {len(ports)} tcp port(s) for service "
+        f"versions (timeout={args.timeout}s, concurrency={args.concurrency}) …"
+    )
+    started = datetime.now(timezone.utc).replace(tzinfo=None)
+    t0 = time.perf_counter()
+    results = asyncio.run(scan_ports_async(
+        target_ip, ports, timeout=args.timeout, concurrency=args.concurrency,
+    ))
+    elapsed = time.perf_counter() - t0
+    render_results_table(
+        target_label, results, elapsed, show_closed=args.show_closed
+    )
+
+    # Step 2 — match versions against the local CVE dataset (+ NVD if asked).
+    findings = scan_local(results)
+    if args.nvd:
+        print("Querying NVD (live, rate-limited) — this may take a moment …")
+        nvd_findings, errors = asyncio.run(
+            scan_nvd(results, api_key=os.getenv("NVD_API_KEY"))
+        )
+        findings += nvd_findings
+        for err in errors:
+            print(f"warning: NVD query failed — {err}", file=sys.stderr)
+    completed = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    render_vuln_table(target_label, findings)
+
+    if args.no_save:
+        return 0
+    try:
+        scan_id = asyncio.run(save_vuln_scan(
+            target_ip=target_ip,
+            target_hostname=target_hostname,
+            port_spec=args.ports,
+            timeout=args.timeout,
+            started_at=started,
+            completed_at=completed,
+            port_results=results,
+            findings=findings,
+            used_nvd=args.nvd,
+        ))
+        print(f"Saved scan: id={scan_id}  ({len(findings)} vuln finding(s))")
+    except Exception as e:
+        print(f"warning: could not save scan to DB: {e}", file=sys.stderr)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="cyberscan",
@@ -266,6 +342,41 @@ def build_parser() -> argparse.ArgumentParser:
         help="skip reverse-DNS lookup for alive hosts (faster)",
     )
     sweep.set_defaults(func=cmd_sweep, resolve=True)
+
+    vuln = sub.add_parser(
+        "vuln",
+        help="match service versions against known CVEs (local DB + optional NVD)",
+    )
+    vuln.add_argument("target", help="target IP or hostname")
+    vuln.add_argument(
+        "-p", "--ports",
+        default="1-1000",
+        help="ports: '80', '1-1000', or '80,443,8080' (default: 1-1000)",
+    )
+    vuln.add_argument(
+        "--timeout", type=float, default=1.0,
+        help="per-port connect timeout in seconds (default: 1.0)",
+    )
+    vuln.add_argument(
+        "-c", "--concurrency", type=int, default=DEFAULT_TCP_CONCURRENCY,
+        help=f"max concurrent probes (default: {DEFAULT_TCP_CONCURRENCY})",
+    )
+    vuln.add_argument(
+        "--nvd", action="store_true",
+        help=(
+            "also query the live NIST NVD API (rate-limited; "
+            "set NVD_API_KEY to raise the limit)"
+        ),
+    )
+    vuln.add_argument(
+        "--show-closed", action="store_true",
+        help="show closed/filtered ports in the port table",
+    )
+    vuln.add_argument(
+        "--no-save", action="store_true",
+        help="don't persist the scan or its CVEs to PostgreSQL",
+    )
+    vuln.set_defaults(func=cmd_vuln)
     return p
 
 
