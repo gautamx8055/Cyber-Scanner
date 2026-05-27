@@ -6,6 +6,8 @@ FastAPI application. Phase 1: hello world to verify the stack is alive.
 from fastapi import FastAPI
 from rich.console import Console
 
+from api.routes import router as scans_router, ws_router
+
 console = Console()
 
 app = FastAPI(
@@ -13,6 +15,9 @@ app = FastAPI(
     description="Professional-grade cybersecurity scanner API",
     version="0.1.0",
 )
+
+app.include_router(scans_router)
+app.include_router(ws_router)
 
 
 @app.get("/")

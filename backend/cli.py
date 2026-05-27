@@ -8,6 +8,8 @@ Run from the `backend/` directory:
 Subcommands:
     ports   TCP/UDP port scan (sync or async)
     sweep   ICMP ping sweep across a CIDR (needs root for raw sockets)
+    vuln    match service versions against known CVEs (local DB + optional NVD)
+    web     web security scan: TLS, headers, dir brute-force, OWASP probes, subdomains
 """
 from __future__ import annotations
 
@@ -35,6 +37,15 @@ from scanner.vuln_scanner import (
     save_vuln_scan,
     scan_local,
     scan_nvd,
+)
+from scanner.web_scanner import (
+    ALL_CHECKS,
+    DEFAULT_HTTP_CONCURRENCY,
+    DEFAULT_HTTP_TIMEOUT,
+    normalize_target,
+    render_web_table,
+    run_web_scan,
+    save_web_scan,
 )
 
 
@@ -273,6 +284,82 @@ def cmd_vuln(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_web(args: argparse.Namespace) -> int:
+    # Resolve which checks to run.
+    if args.checks:
+        requested = tuple(c.strip().lower() for c in args.checks.split(",") if c.strip())
+        unknown = [c for c in requested if c not in ALL_CHECKS]
+        if unknown:
+            print(
+                f"error: unknown check(s): {', '.join(unknown)}; "
+                f"valid: {', '.join(ALL_CHECKS)}",
+                file=sys.stderr,
+            )
+            return 2
+        checks = requested
+    else:
+        checks = ALL_CHECKS
+
+    target_url, _root_url, host, _port, _scheme = normalize_target(args.target)
+    if not host:
+        print(f"error: could not parse a host from {args.target!r}", file=sys.stderr)
+        return 2
+
+    print(
+        f"Scanning {target_url} — checks: {', '.join(checks)} "
+        f"(timeout={args.timeout}s, concurrency={args.concurrency}) …"
+    )
+    if "probes" in checks:
+        print(
+            "note: active OWASP probes send crafted request parameters — "
+            "only scan targets you are authorised to test."
+        )
+
+    started = datetime.now(timezone.utc).replace(tzinfo=None)
+    t0 = time.perf_counter()
+    result = asyncio.run(run_web_scan(
+        args.target,
+        checks=checks,
+        timeout=args.timeout,
+        concurrency=args.concurrency,
+        dir_wordlist=args.wordlist,
+    ))
+    elapsed = time.perf_counter() - t0
+    completed = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    render_web_table(result)
+    print(f"Ran {len(result.checks_run)} check(s) in {elapsed:.2f}s")
+
+    if args.no_save:
+        return 0
+
+    # scans.target_ip is NOT NULL — resolve the host (best effort) for storage.
+    if is_ip_literal(host):
+        target_ip, target_hostname = host, None
+    else:
+        target_ip = resolve_forward(host) or host
+        target_hostname = host
+
+    try:
+        scan_id = asyncio.run(save_web_scan(
+            target_ip=target_ip,
+            target_hostname=target_hostname,
+            result=result,
+            started_at=started,
+            completed_at=completed,
+            options={
+                "checks": list(checks),
+                "timeout": args.timeout,
+                "concurrency": args.concurrency,
+                "target_url": result.target_url,
+            },
+        ))
+        print(f"Saved scan: id={scan_id}  ({len(result.findings)} web finding(s))")
+    except Exception as e:
+        print(f"warning: could not save scan to DB: {e}", file=sys.stderr)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="cyberscan",
@@ -377,6 +464,40 @@ def build_parser() -> argparse.ArgumentParser:
         help="don't persist the scan or its CVEs to PostgreSQL",
     )
     vuln.set_defaults(func=cmd_vuln)
+
+    web = sub.add_parser(
+        "web",
+        help="web security scan: TLS, headers, dir brute-force, OWASP probes, subdomains",
+    )
+    web.add_argument(
+        "target",
+        help="target URL or hostname (e.g. https://example.com or example.com)",
+    )
+    web.add_argument(
+        "--checks",
+        default=None,
+        help=(
+            "comma-separated checks to run (default: all). "
+            f"Available: {', '.join(ALL_CHECKS)}"
+        ),
+    )
+    web.add_argument(
+        "--timeout", type=float, default=DEFAULT_HTTP_TIMEOUT,
+        help=f"per-request timeout in seconds (default: {DEFAULT_HTTP_TIMEOUT})",
+    )
+    web.add_argument(
+        "-c", "--concurrency", type=int, default=DEFAULT_HTTP_CONCURRENCY,
+        help=f"max concurrent requests (default: {DEFAULT_HTTP_CONCURRENCY})",
+    )
+    web.add_argument(
+        "--wordlist", default=None,
+        help="path to a custom directory wordlist (overrides the bundled one)",
+    )
+    web.add_argument(
+        "--no-save", action="store_true",
+        help="don't persist the scan or its findings to PostgreSQL",
+    )
+    web.set_defaults(func=cmd_web)
     return p
 
 

@@ -525,32 +525,32 @@ cyber-scanner/
 ## Progress Tracker
 
 - [x] Project planned
-- [ ] **Phase 1** — Foundation + Docker Setup
-  - [ ] 1.1 Docker + PostgreSQL setup
-  - [ ] 1.2 Python project skeleton
-  - [ ] 1.3 Connect Python to PostgreSQL
-- [ ] **Phase 2** — Synchronous Port Scanner
-  - [ ] 2.1 TCP connect scanner
-  - [ ] 2.2 Banner grabbing + service detection
-  - [ ] 2.3 argparse CLI
-- [ ] **Phase 3** — Async Port Scanner
-  - [ ] 3.1 Rewrite with asyncio
-  - [ ] 3.2 Concurrency control + UDP scanner
-  - [ ] 3.3 Host discovery (ping sweep)
-  - [ ] 3.4 DNS resolution + OS fingerprinting
-- [ ] **Phase 4** — Vulnerability Detection
-  - [ ] 4.1 Version extraction + local CVE DB
-  - [ ] 4.2 NVD API + risk scoring
-  - [ ] 4.3 Save vulnerabilities to PostgreSQL
-- [ ] **Phase 5** — Web Security Scanner
-  - [ ] 5.1 SSL/TLS + HTTP header analysis
-  - [ ] 5.2 Directory brute-forcer
-  - [ ] 5.3 OWASP basic probes
-  - [ ] 5.4 Subdomain enumeration
+- [x] **Phase 1** — Foundation + Docker Setup
+  - [x] 1.1 Docker + PostgreSQL setup
+  - [x] 1.2 Python project skeleton
+  - [x] 1.3 Connect Python to PostgreSQL
+- [x] **Phase 2** — Synchronous Port Scanner
+  - [x] 2.1 TCP connect scanner
+  - [x] 2.2 Banner grabbing + service detection
+  - [x] 2.3 argparse CLI
+- [x] **Phase 3** — Async Port Scanner
+  - [x] 3.1 Rewrite with asyncio
+  - [x] 3.2 Concurrency control + UDP scanner
+  - [x] 3.3 Host discovery (ping sweep)
+  - [x] 3.4 DNS resolution + OS fingerprinting
+- [x] **Phase 4** — Vulnerability Detection
+  - [x] 4.1 Version extraction + local CVE DB
+  - [x] 4.2 NVD API + risk scoring
+  - [x] 4.3 Save vulnerabilities to PostgreSQL
+- [x] **Phase 5** — Web Security Scanner
+  - [x] 5.1 SSL/TLS + HTTP header analysis
+  - [x] 5.2 Directory brute-forcer
+  - [x] 5.3 OWASP basic probes
+  - [x] 5.4 Subdomain enumeration
 - [ ] **Phase 6** — FastAPI Backend
-  - [ ] 6.1 Database models + migrations
-  - [ ] 6.2 Core API routes
-  - [ ] 6.3 Background tasks + WebSocket
+  - [x] 6.1 Database models + migrations
+  - [x] 6.2 Core API routes
+  - [x] 6.3 Background tasks + WebSocket
   - [ ] 6.4 Full Docker Compose setup
 - [ ] **Phase 7** — Report Engine
   - [ ] 7.1 JSON + CSV export

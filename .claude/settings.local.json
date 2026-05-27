@@ -34,7 +34,26 @@
       "Bash(git -C /home/loop/cyber-scanner restore backend/cli.py backend/scanner/port_scanner.py TODO.md)",
       "Bash(git -C /home/loop/cyber-scanner status)",
       "Bash(git -C /home/loop/cyber-scanner add backend/cli.py backend/scanner/port_scanner.py TODO.md docs/tasks/task-3.2-semaphore-and-udp.md)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(docker-compose up *)",
+      "Bash(docker-compose logs *)",
+      "Bash(docker-compose exec *)",
+      "Bash(/Users/gautam/Projects/Cyber-Scanner/venv/bin/pip show *)",
+      "Bash(jq --version)",
+      "Bash(bash /Users/gautam/.claude/statusline-command.sh)",
+      "Bash(claude *)",
+      "Bash(python3 -m py_compile scanner/web_scanner.py cli.py db/models.py alembic/versions/c3d4e5f6a7b8_add_web_findings_table.py)",
+      "Bash(python3 -c 'import __TRACKED_VAR__; print\\('\\\\''  __TRACKED_VAR__'\\\\'', getattr\\(__TRACKED_VAR__,'\\\\''__version__'\\\\'','\\\\''?'\\\\''\\)\\)')",
+      "Bash(open -a Docker)",
+      "Bash(docker buildx *)",
+      "Bash(curl -s http://localhost:8000/openapi.json)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(m.upper\\(\\), p\\) for p,ms in d['paths'].items\\(\\) for m in ms]\")",
+      "Bash(curl -s \"http://localhost:8000/api/scans?limit=5\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s http://localhost:8000/api/scans/85a3850f-faa8-4137-bdb5-c067b070b2b3)",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s -o /dev/null -w \"GET / -> HTTP %{http_code}\\\\n\" http://localhost:8000/)",
+      "Bash(docker cp *)"
     ]
   }
 }

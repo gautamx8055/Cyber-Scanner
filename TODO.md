@@ -63,27 +63,27 @@ Mark tasks as done by changing `[ ]` to `[x]`.
 ---
 
 ## Phase 5 — Web Security Scanner
-- [ ] 5.1 SSL/TLS checker — expiry, issuer, self-signed, cipher suites
-- [ ] 5.1 HTTP security header analysis — X-Frame-Options, CSP, HSTS, etc.
-- [ ] 5.2 Directory brute-forcer with wordlist — async GET via httpx
-- [ ] 5.2 Report 200 / 403 / 301 responses
-- [ ] 5.3 Open redirect probe
-- [ ] 5.3 Reflected XSS probe
-- [ ] 5.3 SQL injection (error-based) probe
-- [ ] 5.4 Subdomain enumeration via async DNS brute-force with aiodns
+- [x] 5.1 SSL/TLS checker — expiry, issuer, self-signed, cipher suites
+- [x] 5.1 HTTP security header analysis — X-Frame-Options, CSP, HSTS, etc.
+- [x] 5.2 Directory brute-forcer with wordlist — async GET via httpx
+- [x] 5.2 Report 200 / 403 / 301 responses
+- [x] 5.3 Open redirect probe
+- [x] 5.3 Reflected XSS probe
+- [x] 5.3 SQL injection (error-based) probe
+- [x] 5.4 Subdomain enumeration via async DNS brute-force with aiodns
 
 ---
 
 ## Phase 6 — FastAPI Backend + Database Models
-- [ ] 6.1 Define full SQLAlchemy models: Scan, Port, Vulnerability, WebFinding
-- [ ] 6.1 Write Alembic migration for complete schema
-- [ ] 6.1 Add indexes (scan_id, target_ip, created_at)
-- [ ] 6.2 `POST /api/scans` — start a new scan
-- [ ] 6.2 `GET /api/scans` — list scans with pagination
-- [ ] 6.2 `GET /api/scans/{id}` — full scan details
-- [ ] 6.2 `DELETE /api/scans/{id}` — delete a scan
-- [ ] 6.3 Run scans as FastAPI background tasks
-- [ ] 6.3 WebSocket `/ws/scan/{id}` — push live progress updates
+- [x] 6.1 Define full SQLAlchemy models: Scan, Port, Vulnerability, WebFinding
+- [x] 6.1 Write Alembic migration for complete schema
+- [x] 6.1 Add indexes (scan_id, target_ip, created_at)
+- [x] 6.2 `POST /api/scans` — start a new scan
+- [x] 6.2 `GET /api/scans` — list scans with pagination
+- [x] 6.2 `GET /api/scans/{id}` — full scan details
+- [x] 6.2 `DELETE /api/scans/{id}` — delete a scan
+- [x] 6.3 Run scans as FastAPI background tasks
+- [x] 6.3 WebSocket `/ws/scan/{id}` — push live progress updates
 - [ ] 6.4 Add backend container to docker-compose with health checks
 - [ ] 6.4 Configure container networking (backend → db by service name)
 
