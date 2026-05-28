@@ -53,7 +53,32 @@
       "Bash(curl -s http://localhost:8000/api/scans/85a3850f-faa8-4137-bdb5-c067b070b2b3)",
       "Bash(python3 -c ' *)",
       "Bash(curl -s -o /dev/null -w \"GET / -> HTTP %{http_code}\\\\n\" http://localhost:8000/)",
-      "Bash(docker cp *)"
+      "Bash(docker cp *)",
+      "Bash(python3 -c \"import fastapi, sqlalchemy, jinja2, weasyprint; print\\('all present'\\)\")",
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\('scanner/reporter.py'\\).read\\(\\)\\); ast.parse\\(open\\('api/routes.py'\\).read\\(\\)\\); print\\('syntax ok'\\)\")",
+      "Bash(python3 -m pip install --user --quiet jinja2)",
+      "Bash(python3 -c \"import weasyprint\")",
+      "Bash(brew list *)",
+      "Bash(grep -E \"^\\(pango|cairo|fontconfig\\)$\")",
+      "Bash(brew --prefix pango)",
+      "Bash(brew --prefix cairo)",
+      "Bash(DYLD_FALLBACK_LIBRARY_PATH=\"/opt/homebrew/lib\" python3 -m pip install --user --quiet weasyprint)",
+      "Bash(python3 *)",
+      "Bash(npm --version)",
+      "Bash(npx --version)",
+      "Bash(npx --yes create-next-app@14 frontend --typescript --tailwind --eslint --app --no-src-dir --import-alias \"@/*\" --use-npm)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(npx next *)",
+      "Bash(PORT=3000 npx next dev --port 3000)",
+      "Bash(echo \"pid=$!\")",
+      "Bash(curl -s -o /tmp/home.html -w \"status=%{http_code} bytes=%{size_download}\\\\n\" http://localhost:3000/)",
+      "Read(//tmp/**)",
+      "Bash(curl -s -o /tmp/new.html -w \"/scans/new: status=%{http_code} bytes=%{size_download}\\\\n\" http://localhost:3000/scans/new)",
+      "Bash(curl -s -o /tmp/live.html -w \"/scans/abc/live: status=%{http_code} bytes=%{size_download}\\\\n\" http://localhost:3000/scans/abc/live)",
+      "Bash(curl -s -o /tmp/detail.html -w \"/scans/abc: status=%{http_code} bytes=%{size_download}\\\\n\" http://localhost:3000/scans/abc)",
+      "Bash(pkill -f \"next dev\")"
     ]
   }
 }
