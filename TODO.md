@@ -104,8 +104,8 @@ Mark tasks as done by changing `[ ]` to `[x]`.
 - [x] 8.1 Set up Next.js project with shadcn/ui + TailwindCSS
 - [x] 8.1 Dashboard home — scan list, risk summary cards, Recharts charts
 - [x] 8.1 Add frontend container to docker-compose
-- [ ] 8.2 New scan form — target input, scan type selector
-- [ ] 8.2 Live scan page — WebSocket connection, real-time progress bar + port table
+- [x] 8.2 New scan form — target input, scan type selector
+- [x] 8.2 Live scan page — WebSocket connection, real-time progress bar + port table
 - [ ] 8.3 Per-scan detail page — ports, vulnerabilities, web findings
 - [ ] 8.3 Severity badges (Critical/High/Medium/Low)
 - [ ] 8.3 Report download buttons — JSON / PDF / HTML / CSV
