@@ -48,7 +48,36 @@ services:
       retries: 5
       start_period: 15s
 
-  # frontend: (added in Phase 8)
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    container_name: cyberscanner_frontend
+    restart: unless-stopped
+    environment:
+      # The browser (not the container) calls the backend, so this URL is
+      # reachable from the host — the published 8000 port. Inside the network
+      # you'd use http://backend:8000, but that name doesn't resolve in the
+      # user's browser.
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      # Anonymous volume keeps the container's pre-installed node_modules from
+      # being shadowed by the host bind-mount (host has no node_modules in
+      # CI/clean checkouts).
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 networks:
   default:
