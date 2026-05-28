@@ -84,8 +84,8 @@ Mark tasks as done by changing `[ ]` to `[x]`.
 - [x] 6.2 `DELETE /api/scans/{id}` — delete a scan
 - [x] 6.3 Run scans as FastAPI background tasks
 - [x] 6.3 WebSocket `/ws/scan/{id}` — push live progress updates
-- [ ] 6.4 Add backend container to docker-compose with health checks
-- [ ] 6.4 Configure container networking (backend → db by service name)
+- [x] 6.4 Add backend container to docker-compose with health checks
+- [x] 6.4 Configure container networking (backend → db by service name)
 
 ---
 
