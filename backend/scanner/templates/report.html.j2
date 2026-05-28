@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ tool }} Report — {{ scan.target_hostname or scan.target_ip }}</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 14mm;
+    @bottom-right {
+      content: "Page " counter(page) " / " counter(pages);
+      font-family: "Helvetica", "Arial", sans-serif;
+      font-size: 9pt;
+      color: #888;
+    }
+  }
+  :root {
+    --fg: #1a1f2c;
+    --muted: #5d6677;
+    --line: #e4e7ec;
+    --accent: #2563eb;
+    --bg-soft: #f7f9fc;
+    --critical: #b3091a;
+    --high: #c4421a;
+    --medium: #c98a14;
+    --low: #2a8a3e;
+    --info: #4a6fa5;
+    --unknown: #6b7280;
+  }
+  body {
+    font-family: "Helvetica", "Arial", sans-serif;
+    color: var(--fg);
+    font-size: 10pt;
+    line-height: 1.45;
+    margin: 0;
+  }
+  h1, h2, h3 { color: var(--fg); margin: 0 0 6px; }
+  h1 { font-size: 22pt; }
+  h2 { font-size: 14pt; margin-top: 22px; padding-bottom: 4px;
+       border-bottom: 1px solid var(--line); }
+  h3 { font-size: 11pt; color: var(--muted); }
+  .muted { color: var(--muted); }
+  .header { margin-bottom: 18px; }
+  .header .meta { font-size: 9pt; color: var(--muted); margin-top: 4px; }
+  .scan-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 18px;
+    margin-top: 8px;
+    font-size: 10pt;
+  }
+  .scan-meta dt { color: var(--muted); }
+  .scan-meta dd { margin: 0; font-weight: 500; }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 10px 0 6px;
+  }
+  .card {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 8px 10px;
+  }
+  .card .value { font-size: 18pt; font-weight: 600; }
+  .card .label { font-size: 8.5pt; color: var(--muted); text-transform: uppercase;
+                 letter-spacing: 0.04em; }
+  .sev-cards {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin: 6px 0 0;
+  }
+  .sev-card {
+    text-align: center;
+    padding: 6px 4px;
+    border-radius: 4px;
+    color: white;
+    font-size: 9pt;
+  }
+  .sev-card .v { font-size: 13pt; font-weight: 700; display: block; }
+  .sev-Critical { background: var(--critical); }
+  .sev-High     { background: var(--high); }
+  .sev-Medium   { background: var(--medium); }
+  .sev-Low      { background: var(--low); }
+  .sev-Info     { background: var(--info); }
+  .sev-Unknown  { background: var(--unknown); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    margin-top: 8px;
+  }
+  th, td {
+    border-bottom: 1px solid var(--line);
+    padding: 5px 6px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--bg-soft);
+    color: var(--muted);
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  tr { page-break-inside: avoid; }
+  .pill {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 10px;
+    color: white;
+    font-size: 8pt;
+    font-weight: 600;
+  }
+  .pill-Critical { background: var(--critical); }
+  .pill-High     { background: var(--high); }
+  .pill-Medium   { background: var(--medium); }
+  .pill-Low      { background: var(--low); }
+  .pill-Info     { background: var(--info); }
+  .pill-Unknown  { background: var(--unknown); }
+  .empty {
+    color: var(--muted);
+    font-style: italic;
+    margin: 6px 0 0;
+    font-size: 9pt;
+  }
+  code, .mono { font-family: "SF Mono", "Consolas", monospace; font-size: 9pt; }
+  .description { color: var(--muted); }
+  .description code { color: var(--fg); }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <h1>{{ tool }} Security Report</h1>
+  <div class="meta">
+    <strong>{{ scan.target_hostname or scan.target_ip }}</strong>
+    &middot; scan {{ scan.scan_type }}
+    &middot; {{ scan.status }}
+    &middot; generated {{ generated_at }}
+    &middot; v{{ version }}
+  </div>
+</header>
+
+<section>
+  <h2>Scan Details</h2>
+  <dl class="scan-meta">
+    <dt>Target IP</dt><dd class="mono">{{ scan.target_ip }}</dd>
+    <dt>Hostname</dt><dd class="mono">{{ scan.target_hostname or "—" }}</dd>
+    <dt>Scan Type</dt><dd>{{ scan.scan_type }}</dd>
+    <dt>Status</dt><dd>{{ scan.status }}</dd>
+    <dt>Started</dt><dd class="mono">{{ scan.started_at | iso }}</dd>
+    <dt>Completed</dt><dd class="mono">{{ scan.completed_at | iso }}</dd>
+    {% if summary.duration_seconds is not none %}
+    <dt>Duration</dt><dd>{{ summary.duration_seconds }} s</dd>
+    {% endif %}
+    <dt>Scan ID</dt><dd class="mono">{{ scan.scan_id }}</dd>
+  </dl>
+</section>
+
+<section>
+  <h2>Summary</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="value">{{ summary.open_ports }}</div>
+      <div class="label">Open Ports</div>
+    </div>
+    <div class="card">
+      <div class="value">{{ summary.total_ports_recorded }}</div>
+      <div class="label">Ports Recorded</div>
+    </div>
+    <div class="card">
+      <div class="value">{{ summary.vulnerabilities }}</div>
+      <div class="label">Vulnerabilities</div>
+    </div>
+    <div class="card">
+      <div class="value">{{ summary.web_findings }}</div>
+      <div class="label">Web Findings</div>
+    </div>
+  </div>
+  <div class="sev-cards">
+    {% for label in severity_order %}
+    <div class="sev-card sev-{{ label }}">
+      <span class="v">{{ summary.severity[label] }}</span>{{ label }}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section>
+  <h2>Open Ports ({{ scan.ports | selectattr("state", "equalto", "open") | list | length }})</h2>
+  {% set open_ports = scan.ports | selectattr("state", "equalto", "open") | list %}
+  {% if open_ports %}
+  <table>
+    <thead>
+      <tr>
+        <th>Port</th><th>Proto</th><th>Service</th><th>Product</th>
+        <th>Version</th><th>Banner</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for p in open_ports %}
+      <tr>
+        <td class="mono">{{ p.port }}</td>
+        <td>{{ p.proto }}</td>
+        <td>{{ p.service or "—" }}</td>
+        <td>{{ p.product or "—" }}</td>
+        <td class="mono">{{ p.version or "—" }}</td>
+        <td class="mono description">{{ (p.banner or "")[:120] }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No open ports recorded.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Vulnerabilities ({{ scan.vulnerabilities | length }})</h2>
+  {% if scan.vulnerabilities %}
+  <table>
+    <thead>
+      <tr>
+        <th>CVE</th><th>Severity</th><th>CVSS</th><th>Product</th>
+        <th>Version</th><th>Port</th><th>Source</th><th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for v in scan.vulnerabilities %}
+      <tr>
+        <td class="mono">{{ v.cve_id }}</td>
+        <td><span class="pill pill-{{ v.severity }}">{{ v.severity }}</span></td>
+        <td class="mono">{{ v.cvss_score if v.cvss_score is not none else "—" }}</td>
+        <td>{{ v.product or "—" }}</td>
+        <td class="mono">{{ v.version or "—" }}</td>
+        <td class="mono">{{ v.port if v.port is not none else "—" }}</td>
+        <td>{{ v.source }}</td>
+        <td class="description">{{ (v.description or "")[:200] }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No vulnerabilities identified.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Web Findings ({{ scan.web_findings | length }})</h2>
+  {% if scan.web_findings %}
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th><th>Severity</th><th>URL</th><th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for w in scan.web_findings %}
+      <tr>
+        <td>{{ w.finding_type }}</td>
+        <td><span class="pill pill-{{ w.severity }}">{{ w.severity }}</span></td>
+        <td class="mono">{{ (w.url or "—")[:80] }}</td>
+        <td class="description">{{ (w.description or "")[:200] }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No web findings recorded.</p>
+  {% endif %}
+</section>
+
+</body>
+</html>

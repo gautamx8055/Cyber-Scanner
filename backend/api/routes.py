@@ -6,12 +6,15 @@ CRUD over the `scans` resource. Creating a scan persists it with status
 FastAPI serves interactive docs for every route below at /docs.
 """
 
+import asyncio
+
 from fastapi import (
     APIRouter,
     BackgroundTasks,
     Depends,
     HTTPException,
     Query,
+    Response,
     WebSocket,
     WebSocketDisconnect,
     status,
@@ -33,6 +36,7 @@ from api.schemas import (
 from db.models import Port, Scan, ScanStatus, Vulnerability, WebFinding
 from db.session import AsyncSessionLocal, get_db
 from scanner.dns_utils import is_ip_literal
+from scanner.reporter import ScanReport
 
 router = APIRouter(prefix="/api", tags=["scans"])
 ws_router = APIRouter(tags=["scans"])
@@ -138,6 +142,59 @@ async def delete_scan(scan_id: str, db: AsyncSession = Depends(get_db)) -> None:
     if scan is None:
         raise HTTPException(status_code=404, detail="scan not found")
     await db.delete(scan)
+
+
+# --- export ----------------------------------------------------------------
+
+# (format -> (renderer attribute on ScanReport, MIME type, file extension)).
+# Keeps the route body free of branching: format validation, header building,
+# and rendering are all driven from this table.
+_EXPORT_FORMATS: dict[str, tuple[str, str, str]] = {
+    "json": ("to_json", "application/json", "json"),
+    "csv": ("to_csv", "text/csv; charset=utf-8", "csv"),
+    "html": ("to_html", "text/html; charset=utf-8", "html"),
+    "pdf": ("to_pdf", "application/pdf", "pdf"),
+}
+
+
+@router.get("/scans/{scan_id}/export")
+async def export_scan(
+    scan_id: str,
+    format: str = Query("json", description="export format: json|csv|html|pdf"),
+    download: bool = Query(False, description="force browser download (Content-Disposition: attachment)"),
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    """Render a finished or in-flight scan as a downloadable report.
+
+    The scan does not need to be `completed` — partial findings are fine for
+    JSON/CSV during a long-running scan. PDF rendering is the slow path; it's
+    handed off to a worker thread so the event loop isn't blocked.
+    """
+    fmt = format.lower()
+    if fmt not in _EXPORT_FORMATS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"unsupported format {format!r}; choose one of: {', '.join(_EXPORT_FORMATS)}",
+        )
+
+    report = await ScanReport.from_db(db, scan_id)
+    if report is None:
+        raise HTTPException(status_code=404, detail="scan not found")
+
+    renderer, media_type, ext = _EXPORT_FORMATS[fmt]
+    if fmt == "pdf":
+        body = await asyncio.to_thread(report.to_pdf)
+    else:
+        body = getattr(report, renderer)()
+
+    # HTML opens inline in the browser by default; every other format — and
+    # HTML with ?download=true — comes back as an attachment.
+    headers: dict[str, str] = {}
+    if fmt != "html" or download:
+        headers["Content-Disposition"] = (
+            f'attachment; filename="cyberscan-{scan_id}.{ext}"'
+        )
+    return Response(content=body, media_type=media_type, headers=headers)
 
 
 @ws_router.websocket("/ws/scan/{scan_id}")

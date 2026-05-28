@@ -90,13 +90,13 @@ Mark tasks as done by changing `[ ]` to `[x]`.
 ---
 
 ## Phase 7 — Report Engine
-- [ ] 7.1 Write `backend/scanner/reporter.py` with `ScanReport` dataclass
-- [ ] 7.1 Export to JSON — full structured report
-- [ ] 7.1 Export to CSV — flat table (one row per finding)
-- [ ] 7.1 `GET /api/scans/{id}/export?format=json` endpoint
-- [ ] 7.2 Design HTML report template with Jinja2
-- [ ] 7.2 Convert HTML → PDF with WeasyPrint
-- [ ] 7.2 `GET /api/scans/{id}/export?format=pdf` and `?format=html` endpoints
+- [x] 7.1 Write `backend/scanner/reporter.py` with `ScanReport` dataclass
+- [x] 7.1 Export to JSON — full structured report
+- [x] 7.1 Export to CSV — flat table (one row per finding)
+- [x] 7.1 `GET /api/scans/{id}/export?format=json` endpoint
+- [x] 7.2 Design HTML report template with Jinja2
+- [x] 7.2 Convert HTML → PDF with WeasyPrint
+- [x] 7.2 `GET /api/scans/{id}/export?format=pdf` and `?format=html` endpoints
 
 ---
 
