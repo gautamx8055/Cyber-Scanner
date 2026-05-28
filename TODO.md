@@ -106,9 +106,9 @@ Mark tasks as done by changing `[ ]` to `[x]`.
 - [x] 8.1 Add frontend container to docker-compose
 - [x] 8.2 New scan form — target input, scan type selector
 - [x] 8.2 Live scan page — WebSocket connection, real-time progress bar + port table
-- [ ] 8.3 Per-scan detail page — ports, vulnerabilities, web findings
-- [ ] 8.3 Severity badges (Critical/High/Medium/Low)
-- [ ] 8.3 Report download buttons — JSON / PDF / HTML / CSV
+- [x] 8.3 Per-scan detail page — ports, vulnerabilities, web findings
+- [x] 8.3 Severity badges (Critical/High/Medium/Low)
+- [x] 8.3 Report download buttons — JSON / PDF / HTML / CSV
 
 ---
 
